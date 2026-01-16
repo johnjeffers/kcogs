@@ -23,4 +23,10 @@ export AWS_PROFILE=profile_name
 
 ### Running the App
 
-Start the app with `make dev` and then open http://localhost:3000
+Start the app:
+
+```sh
+make install && make dev
+```
+
+Open http://localhost:3000

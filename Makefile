@@ -22,7 +22,7 @@ install:
 
 # Update dependencies to latest versions
 update:
-	cd backend && go get -u && go mod tidy
+	cd backend && go get -u ./... && go mod tidy
 	cd frontend && npx npm-check-updates -u && npm install
 
 # Build for production
