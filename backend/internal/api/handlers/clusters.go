@@ -50,7 +50,6 @@ func (h *ClustersHandler) UploadKubeconfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var filenames []string
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
 		if err != nil {
@@ -70,7 +69,6 @@ func (h *ClustersHandler) UploadKubeconfig(w http.ResponseWriter, r *http.Reques
 			sendJSONError(w, http.StatusBadRequest, "Invalid kubeconfig file: "+fileHeader.Filename, err.Error())
 			return
 		}
-		filenames = append(filenames, fileHeader.Filename)
 	}
 
 	// Get available contexts
