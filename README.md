@@ -15,13 +15,13 @@ Currently, the only way to use the app is to clone this repo and run it locally.
 - Valid AWS credentials
 - Valid kubeconfig file(s)
 
+### Running the App
+
 AWS credentials are required to retrieve cost data. Set `AWS_PROFILE` before starting the app.
 
-```
+```sh
 export AWS_PROFILE=profile_name
 ```
-
-### Running the App
 
 Start the app:
 
