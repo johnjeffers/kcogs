@@ -1,2 +1,26 @@
 # kcogs
-Kubernetes Cost of Goods Sold
+
+Get visibility into Cost of Goods Sold in Kubernetes clusters.
+
+⚠️ This is a WORK IN PROGRESS. It currently only pulls AWS cost data.
+
+## Localdev
+
+Currently, the only way to use the app is to clone this repo and run it locally.
+
+### Prerequisites
+
+- Go 1.25
+- Node 25
+- Valid AWS credentials
+- Valid kubeconfig file(s)
+
+AWS credentials are required to retrieve cost data. Set `AWS_PROFILE` before starting the app.
+
+```
+export AWS_PROFILE=profile_name
+```
+
+### Running the App
+
+Start the app with `make dev` and then open http://localhost:3000
