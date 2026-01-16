@@ -4,6 +4,8 @@ Get visibility into Cost of Goods Sold in Kubernetes clusters.
 
 ⚠️ This is a WORK IN PROGRESS. It currently only pulls AWS cost data.
 
+![kCOGS Screenshot](images/kcogs.png)
+
 ## Localdev
 
 Currently, the only way to use the app is to clone this repo and run it locally.
