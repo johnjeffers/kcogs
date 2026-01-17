@@ -52,7 +52,8 @@ func main() {
 	ctx := context.Background()
 	pricingProvider, err := pricing.NewAWSProvider(ctx, cfg.Pricing.RefreshIntervalMinutes)
 	if err != nil {
-		logger.Warn("failed to initialize AWS pricing provider, costs will be zero", "error", err)
+		logger.Error("failed to initialize AWS pricing provider", "error", err)
+		os.Exit(1)
 	}
 
 	// Create cluster-backed data provider

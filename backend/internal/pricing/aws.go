@@ -36,12 +36,30 @@ func NewAWSProvider(ctx context.Context, cacheDurationMinutes int) (*AWSProvider
 
 	client := pricing.NewFromConfig(cfg)
 
+	// Validate credentials by making a test API call
+	if err := validateCredentials(ctx, client); err != nil {
+		return nil, err
+	}
+
 	return &AWSProvider{
 		client:        client,
 		cache:         make(map[string]cogs.CostValue),
 		fargateCache:  make(map[string]*FargatePricing),
 		cacheDuration: time.Duration(cacheDurationMinutes) * time.Minute,
 	}, nil
+}
+
+// validateCredentials checks that AWS credentials are configured and have access to the Pricing API
+func validateCredentials(ctx context.Context, client *pricing.Client) error {
+	// Make a minimal API call to validate credentials
+	_, err := client.DescribeServices(ctx, &pricing.DescribeServicesInput{
+		ServiceCode: aws.String("AmazonEC2"),
+		MaxResults:  aws.Int32(1),
+	})
+	if err != nil {
+		return fmt.Errorf("AWS credentials not found or invalid: %w", err)
+	}
+	return nil
 }
 
 // GetEC2Price returns the hourly on-demand price for an EC2 instance type
