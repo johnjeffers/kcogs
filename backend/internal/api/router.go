@@ -61,5 +61,8 @@ func NewRouter(calculator *cogs.Calculator, dataProvider store.DataProvider, clu
 		r.Get("/costs/namespaces", costsHandler.GetNamespaceCosts)
 	})
 
+	// Serve embedded frontend for all other routes
+	r.Handle("/*", NewSPAHandler())
+
 	return r
 }
