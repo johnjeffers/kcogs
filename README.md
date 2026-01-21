@@ -32,3 +32,24 @@ make install && make dev
 ```
 
 Open http://localhost:3000
+
+### Production Build
+
+Build a single binary with the frontend embedded:
+
+```sh
+make build
+./backend/bin/kcogs
+```
+
+Open http://localhost:8080
+
+### Environment Variables
+
+| Variable                        | Description                                   | Default     |
+| ------------------------------- | --------------------------------------------- | ----------- |
+| `KCOGS_PORT`                    | HTTP server port                              | `8080`      |
+| `KCOGS_LOG_LEVEL`               | Log level (`debug`, `info`, `warn`, `error`)  | `info`      |
+| `KCOGS_AUTO_DISCOVER`           | Enable EKS auto-discovery (`true`/`false`)    | `true`      |
+| `KCOGS_DISCOVER_REGIONS`        | Comma-separated AWS regions for EKS discovery | `us-east-1` |
+| `KCOGS_PRICING_REFRESH_MINUTES` | AWS pricing cache refresh interval            | `60`        |
