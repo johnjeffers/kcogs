@@ -92,6 +92,43 @@ export const CostDashboard: React.FC = () => {
     return `${filtered}/${total}`;
   };
 
+  // Calculate totals from all data (unfiltered)
+  const totals = useMemo(() => {
+    if (!data) return { cost: 0, count: 0 };
+    const cost = data.totalCost;
+    const count = (data.nodes?.length || 0) + (data.namespaces?.length || 0) +
+      (data.workloads?.length || 0);
+    return { cost, count };
+  }, [data]);
+
+  // Calculate selected summary based on active tab and filter
+  const selectedData = useMemo(() => {
+    if (!filteredData) return { cost: 0, count: 0 };
+
+    const sumCost = <T extends { totalCost?: number; hourlyCost?: number }>(items: T[] | undefined) =>
+      items?.reduce((sum, item) => sum + (item.totalCost ?? item.hourlyCost ?? 0), 0) || 0;
+
+    const isClusterTab = activeTab === 'clusters';
+
+    // For clusters tab, sum all filtered resource types
+    if (isClusterTab) {
+      const cost = sumCost(filteredData.nodes) + sumCost(filteredData.namespaces) + sumCost(filteredData.workloads);
+      const count = (filteredData.nodes?.length || 0) + (filteredData.namespaces?.length || 0) +
+        (filteredData.workloads?.length || 0);
+      return { cost, count };
+    }
+
+    // For specific resource tabs, show only that resource type's data
+    let items: { totalCost?: number; hourlyCost?: number }[] | undefined;
+    switch (activeTab) {
+      case 'nodes': items = filteredData.nodes; break;
+      case 'namespaces': items = filteredData.namespaces; break;
+      case 'workloads': items = filteredData.workloads; break;
+    }
+
+    return { cost: sumCost(items), count: items?.length || 0 };
+  }, [filteredData, activeTab]);
+
   const exportToCSV = () => {
     if (!filteredData) return;
 
@@ -216,8 +253,10 @@ export const CostDashboard: React.FC = () => {
       {data && data.clusters && data.clusters.length > 0 && (
         <>
           <CostSummary
-            totalCost={data.totalCost}
-            clusterCount={data.clusters?.length || 0}
+            selectedCost={selectedData.cost}
+            totalCost={totals.cost}
+            selectedCount={selectedData.count}
+            totalCount={totals.count}
             currency={data.currency}
           />
 
