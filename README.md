@@ -19,6 +19,18 @@ Currently, the only way to use the app is to clone this repo and run it locally.
 
 ### Running the App
 
+Install dependencies:
+
+```sh
+make install
+```
+
+Build the app:
+
+```sh
+make build
+```
+
 AWS credentials are required to retrieve cost data. Set `AWS_PROFILE` before starting the app.
 
 ```sh
@@ -28,21 +40,20 @@ export AWS_PROFILE=profile_name
 Start the app:
 
 ```sh
-make install && make dev
-```
-
-Open http://localhost:3000
-
-### Production Build
-
-Build a single binary with the frontend embedded:
-
-```sh
-make build
 ./backend/bin/kcogs
 ```
 
 Open http://localhost:8080
+
+### Development
+
+Start the app in dev mode for hot code reloading during development:
+
+```sh
+make dev
+```
+
+Open http://localhost:3000
 
 ### Environment Variables
 
