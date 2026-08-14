@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { clusterApi } from '../../services/api';
-import type { ContextInfo, ClusterInfo } from '../../types/cluster';
+import type { ClusterInfo, ContextInfo } from '../../types/cluster';
 import { AlgorithmSelector } from '../filters/AlgorithmSelector';
 
 interface ClusterConfigProps {
@@ -10,7 +11,12 @@ interface ClusterConfigProps {
   showAlgorithm?: boolean;
 }
 
-export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, onRefresh, loading: externalLoading, showAlgorithm }) => {
+export const ClusterConfig: React.FC<ClusterConfigProps> = ({
+  onClusterChange,
+  onRefresh,
+  loading: externalLoading,
+  showAlgorithm,
+}) => {
   const [contexts, setContexts] = useState<ContextInfo[]>([]);
   const [connectedClusters, setConnectedClusters] = useState<ClusterInfo[]>([]);
   const [clusterErrors, setClusterErrors] = useState<Record<string, string>>({});
@@ -26,10 +32,7 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
 
   const loadConfig = async () => {
     try {
-      const [kubeconfigRes, clustersRes] = await Promise.all([
-        clusterApi.getKubeconfig(),
-        clusterApi.getClusters(),
-      ]);
+      const [kubeconfigRes, clustersRes] = await Promise.all([clusterApi.getKubeconfig(), clusterApi.getClusters()]);
       setContexts(kubeconfigRes.contexts || []);
       setConnectedClusters(clustersRes.clusters || []);
     } catch (err) {
@@ -50,10 +53,10 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
       setContexts(res.contexts || []);
 
       // Get currently connected cluster names
-      const alreadyConnected = new Set(connectedClusters.map(c => c.context));
+      const alreadyConnected = new Set(connectedClusters.map((c) => c.context));
 
       // Auto-connect to new contexts only
-      const newContexts = (res.contexts || []).filter(ctx => !alreadyConnected.has(ctx.name));
+      const newContexts = (res.contexts || []).filter((ctx) => !alreadyConnected.has(ctx.name));
       for (const ctx of newContexts) {
         try {
           await clusterApi.addCluster(ctx.name, ctx.name);
@@ -64,7 +67,7 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
         }
       }
 
-      setClusterErrors(prev => ({ ...prev, ...newErrors }));
+      setClusterErrors((prev) => ({ ...prev, ...newErrors }));
 
       // Reload connected clusters
       const clustersRes = await clusterApi.getClusters();
@@ -74,10 +77,8 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
       }
     } catch (err: any) {
       console.error('Upload error:', err);
-      const errorMsg = err.response?.data?.error
-        || err.response?.data?.message
-        || err.message
-        || 'Failed to load kubeconfig';
+      const errorMsg =
+        err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to load kubeconfig';
       setError(`${errorMsg}${err.response?.data?.details ? ': ' + err.response.data.details : ''}`);
     } finally {
       setLoading(false);
@@ -104,7 +105,7 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
       // Disconnect
       try {
         await clusterApi.removeCluster(contextName);
-        setClusterErrors(prev => {
+        setClusterErrors((prev) => {
           const updated = { ...prev };
           delete updated[contextName];
           return updated;
@@ -119,7 +120,7 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
       // Connect
       try {
         await clusterApi.addCluster(contextName, contextName);
-        setClusterErrors(prev => {
+        setClusterErrors((prev) => {
           const updated = { ...prev };
           delete updated[contextName];
           return updated;
@@ -129,7 +130,7 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
         onClusterChange?.();
       } catch (err: any) {
         const errMsg = err.response?.data?.details || err.response?.data?.error || 'Connection failed';
-        setClusterErrors(prev => ({ ...prev, [contextName]: errMsg }));
+        setClusterErrors((prev) => ({ ...prev, [contextName]: errMsg }));
       }
     }
 
@@ -150,7 +151,7 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
     try {
       const res = await clusterApi.removeContext(contextName);
       setContexts(res.contexts || []);
-      setClusterErrors(prev => {
+      setClusterErrors((prev) => {
         const updated = { ...prev };
         delete updated[contextName];
         return updated;
@@ -183,9 +184,7 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
           </svg>
           <h2 className="text-lg font-medium text-gray-900">Cluster Configuration</h2>
           {collapsed && connectedClusters.length > 0 && (
-            <span className="text-sm text-gray-500">
-              ({connectedClusters.length} connected)
-            </span>
+            <span className="text-sm text-gray-500">({connectedClusters.length} connected)</span>
           )}
         </button>
       </div>
@@ -198,13 +197,7 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
             </div>
           )}
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+          <input ref={fileInputRef} type="file" multiple onChange={handleFileSelect} className="hidden" />
 
           {/* Clusters */}
           {contexts.length > 0 ? (
@@ -238,7 +231,9 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
                         title={errorMsg || (status === 'connected' ? 'Click to disconnect' : 'Click to connect')}
                         className="inline-flex items-center cursor-pointer disabled:opacity-50 disabled:cursor-wait"
                       >
-                        <span className={`w-2 h-2 rounded-full mr-2 ${isToggling ? 'animate-pulse bg-yellow-500' : dotColors[status]}`}></span>
+                        <span
+                          className={`w-2 h-2 rounded-full mr-2 ${isToggling ? 'animate-pulse bg-yellow-500' : dotColors[status]}`}
+                        ></span>
                         {ctx.name}
                       </button>
                       <button
@@ -265,9 +260,7 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ onClusterChange, o
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">
-                Select kubeconfig files to connect to clusters.
-              </p>
+              <p className="text-sm text-gray-500">Select kubeconfig files to connect to clusters.</p>
               <button
                 onClick={handleBrowseClick}
                 disabled={loading}

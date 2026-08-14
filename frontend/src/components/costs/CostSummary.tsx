@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 interface CostSummaryProps {
   selectedCost: number;
@@ -37,18 +37,14 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
         {/* Hourly Cost */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Hourly Cost
-            </dt>
+            <dt className="text-sm font-medium text-gray-500 truncate">Hourly Cost</dt>
             {showBoth ? (
               <dd className="mt-1">
                 <div className="text-2xl font-semibold text-gray-900">{formatCost(selectedCost)}</div>
                 <div className="text-sm text-gray-500">of {formatCost(totalCost)} total</div>
               </dd>
             ) : (
-              <dd className="mt-1 text-2xl font-semibold text-gray-900">
-                {formatCost(totalCost)}
-              </dd>
+              <dd className="mt-1 text-2xl font-semibold text-gray-900">{formatCost(totalCost)}</dd>
             )}
           </div>
         </div>
@@ -56,18 +52,14 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
         {/* Daily Cost */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Daily Cost
-            </dt>
+            <dt className="text-sm font-medium text-gray-500 truncate">Daily Cost</dt>
             {showBoth ? (
               <dd className="mt-1">
                 <div className="text-2xl font-semibold text-gray-900">{formatCost(selectedDaily)}</div>
                 <div className="text-sm text-gray-500">of {formatCost(totalDaily)} total</div>
               </dd>
             ) : (
-              <dd className="mt-1 text-2xl font-semibold text-gray-900">
-                {formatCost(totalDaily)}
-              </dd>
+              <dd className="mt-1 text-2xl font-semibold text-gray-900">{formatCost(totalDaily)}</dd>
             )}
           </div>
         </div>
@@ -75,18 +67,14 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
         {/* Monthly Cost */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Monthly Cost
-            </dt>
+            <dt className="text-sm font-medium text-gray-500 truncate">Monthly Cost</dt>
             {showBoth ? (
               <dd className="mt-1">
                 <div className="text-2xl font-semibold text-gray-900">{formatCost(selectedMonthly)}</div>
                 <div className="text-sm text-gray-500">of {formatCost(totalMonthly)} total</div>
               </dd>
             ) : (
-              <dd className="mt-1 text-2xl font-semibold text-gray-900">
-                {formatCost(totalMonthly)}
-              </dd>
+              <dd className="mt-1 text-2xl font-semibold text-gray-900">{formatCost(totalMonthly)}</dd>
             )}
           </div>
         </div>
@@ -94,18 +82,14 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
         {/* Resource Count */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Resources
-            </dt>
+            <dt className="text-sm font-medium text-gray-500 truncate">Resources</dt>
             {showBoth ? (
               <dd className="mt-1">
                 <div className="text-2xl font-semibold text-gray-900">{selectedCount}</div>
                 <div className="text-sm text-gray-500">of {totalCount} total</div>
               </dd>
             ) : (
-              <dd className="mt-1 text-2xl font-semibold text-gray-900">
-                {totalCount}
-              </dd>
+              <dd className="mt-1 text-2xl font-semibold text-gray-900">{totalCount}</dd>
             )}
           </div>
         </div>

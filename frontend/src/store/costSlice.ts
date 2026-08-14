@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { CostResponse, CostFilters, AlgorithmDTO } from '../types/cost';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { costApi } from '../services/api';
+import type { AlgorithmDTO, CostFilters, CostResponse } from '../types/cost';
 
 interface AlgorithmConfig {
   id: string;
@@ -29,23 +29,17 @@ const initialState: CostState = {
   filters: {},
 };
 
-export const fetchCosts = createAsyncThunk(
-  'costs/fetch',
-  async (_, { getState }) => {
-    const state = getState() as { costs: CostState };
-    return await costApi.getCosts({
-      ...state.costs.filters,
-      algorithm: state.costs.algorithm.id,
-    });
-  }
-);
+export const fetchCosts = createAsyncThunk('costs/fetch', async (_, { getState }) => {
+  const state = getState() as { costs: CostState };
+  return await costApi.getCosts({
+    ...state.costs.filters,
+    algorithm: state.costs.algorithm.id,
+  });
+});
 
-export const fetchAlgorithms = createAsyncThunk(
-  'costs/fetchAlgorithms',
-  async () => {
-    return await costApi.getAlgorithms();
-  }
-);
+export const fetchAlgorithms = createAsyncThunk('costs/fetchAlgorithms', async () => {
+  return await costApi.getAlgorithms();
+});
 
 const costSlice = createSlice({
   name: 'costs',

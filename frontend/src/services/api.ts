@@ -1,6 +1,6 @@
 import axios from 'axios';
-import type { CostResponse, AlgorithmListResponse, CostFilters } from '../types/cost';
-import type { KubeconfigResponse, ClustersResponse } from '../types/cluster';
+import type { ClustersResponse, KubeconfigResponse } from '../types/cluster';
+import type { AlgorithmListResponse, CostFilters, CostResponse } from '../types/cost';
 
 const api = axios.create({
   baseURL: '/api/v1',

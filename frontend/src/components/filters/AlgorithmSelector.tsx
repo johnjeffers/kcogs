@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { useAppSelector } from '../../hooks/useAppDispatch';
 
 export const AlgorithmSelector: React.FC = () => {
@@ -10,12 +10,7 @@ export const AlgorithmSelector: React.FC = () => {
         Algorithm:
       </label>
       <div className="relative group">
-        <svg
-          className="w-4 h-4 text-gray-400 cursor-help"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
+        <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

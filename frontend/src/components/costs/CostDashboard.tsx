@@ -1,9 +1,10 @@
-import React, { useEffect, useCallback, useState, useMemo } from 'react';
-import { useAppSelector, useAppDispatch } from '../../hooks/useAppDispatch';
-import { fetchCosts, fetchAlgorithms } from '../../store/costSlice';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
+import { fetchAlgorithms, fetchCosts } from '../../store/costSlice';
+import { ClusterConfig } from '../clusters/ClusterConfig';
 import { CostSummary } from './CostSummary';
 import { CostTable } from './CostTable';
-import { ClusterConfig } from '../clusters/ClusterConfig';
 
 type TabType = 'clusters' | 'nodes' | 'namespaces' | 'workloads';
 
@@ -29,9 +30,12 @@ export const CostDashboard: React.FC = () => {
     dispatch(fetchCosts());
 
     // Auto-refresh every 5 minutes
-    const interval = setInterval(() => {
-      dispatch(fetchCosts());
-    }, 5 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        dispatch(fetchCosts());
+      },
+      5 * 60 * 1000,
+    );
 
     return () => clearInterval(interval);
   }, [dispatch]);
@@ -44,7 +48,10 @@ export const CostDashboard: React.FC = () => {
     const matchesFilter = (searchableFields: string[]): boolean => {
       if (!filter.trim()) return true;
 
-      const terms = filter.toLowerCase().split(/\s+/).filter(t => t);
+      const terms = filter
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((t) => t);
       const combined = searchableFields.join(' ').toLowerCase();
 
       for (const term of terms) {
@@ -61,28 +68,36 @@ export const CostDashboard: React.FC = () => {
     };
 
     return {
-      clusters: data.clusters?.filter((c) =>
-        matchesFilter([c.name])
-      ),
-      nodes: data.nodes?.filter((n) =>
-        matchesFilter([n.name, n.cluster, n.instanceType, n.region])
-      ),
-      namespaces: data.namespaces?.filter((ns) =>
-        matchesFilter([ns.namespace, ns.cluster])
-      ),
-      workloads: data.workloads?.filter((wl) =>
-        matchesFilter([wl.name, wl.namespace, wl.cluster, wl.kind])
-      ),
+      clusters: data.clusters?.filter((c) => matchesFilter([c.name])),
+      nodes: data.nodes?.filter((n) => matchesFilter([n.name, n.cluster, n.instanceType, n.region])),
+      namespaces: data.namespaces?.filter((ns) => matchesFilter([ns.namespace, ns.cluster])),
+      workloads: data.workloads?.filter((wl) => matchesFilter([wl.name, wl.namespace, wl.cluster, wl.kind])),
     };
   }, [data, filter]);
 
   const getTabCount = (tab: TabType): { filtered: number; total: number } => {
     if (!data) return { filtered: 0, total: 0 };
     switch (tab) {
-      case 'clusters': return { filtered: filteredData?.clusters?.length || 0, total: data.clusters?.length || 0 };
-      case 'nodes': return { filtered: filteredData?.nodes?.length || 0, total: data.nodes?.length || 0 };
-      case 'namespaces': return { filtered: filteredData?.namespaces?.length || 0, total: data.namespaces?.length || 0 };
-      case 'workloads': return { filtered: filteredData?.workloads?.length || 0, total: data.workloads?.length || 0 };
+      case 'clusters':
+        return {
+          filtered: filteredData?.clusters?.length || 0,
+          total: data.clusters?.length || 0,
+        };
+      case 'nodes':
+        return {
+          filtered: filteredData?.nodes?.length || 0,
+          total: data.nodes?.length || 0,
+        };
+      case 'namespaces':
+        return {
+          filtered: filteredData?.namespaces?.length || 0,
+          total: data.namespaces?.length || 0,
+        };
+      case 'workloads':
+        return {
+          filtered: filteredData?.workloads?.length || 0,
+          total: data.workloads?.length || 0,
+        };
     }
   };
 
@@ -96,8 +111,7 @@ export const CostDashboard: React.FC = () => {
   const totals = useMemo(() => {
     if (!data) return { cost: 0, count: 0 };
     const cost = data.totalCost;
-    const count = (data.nodes?.length || 0) + (data.namespaces?.length || 0) +
-      (data.workloads?.length || 0);
+    const count = (data.nodes?.length || 0) + (data.namespaces?.length || 0) + (data.workloads?.length || 0);
     return { cost, count };
   }, [data]);
 
@@ -113,7 +127,9 @@ export const CostDashboard: React.FC = () => {
     // For clusters tab, sum all filtered resource types
     if (isClusterTab) {
       const cost = sumCost(filteredData.nodes) + sumCost(filteredData.namespaces) + sumCost(filteredData.workloads);
-      const count = (filteredData.nodes?.length || 0) + (filteredData.namespaces?.length || 0) +
+      const count =
+        (filteredData.nodes?.length || 0) +
+        (filteredData.namespaces?.length || 0) +
         (filteredData.workloads?.length || 0);
       return { cost, count };
     }
@@ -121,9 +137,15 @@ export const CostDashboard: React.FC = () => {
     // For specific resource tabs, show only that resource type's data
     let items: { totalCost?: number; hourlyCost?: number }[] | undefined;
     switch (activeTab) {
-      case 'nodes': items = filteredData.nodes; break;
-      case 'namespaces': items = filteredData.namespaces; break;
-      case 'workloads': items = filteredData.workloads; break;
+      case 'nodes':
+        items = filteredData.nodes;
+        break;
+      case 'namespaces':
+        items = filteredData.namespaces;
+        break;
+      case 'workloads':
+        items = filteredData.workloads;
+        break;
     }
 
     return { cost: sumCost(items), count: items?.length || 0 };
@@ -141,7 +163,7 @@ export const CostDashboard: React.FC = () => {
     switch (activeTab) {
       case 'clusters':
         headers = ['Cluster', 'Nodes', 'Pods', 'Namespaces', 'Hourly Cost', 'Daily Cost', 'Monthly Cost'];
-        rows = (filteredData.clusters || []).map(c => [
+        rows = (filteredData.clusters || []).map((c) => [
           c.name,
           String(c.nodeCount),
           String(c.podCount),
@@ -152,8 +174,19 @@ export const CostDashboard: React.FC = () => {
         ]);
         break;
       case 'nodes':
-        headers = ['Cluster', 'Node', 'Type', 'Region', 'CPU', 'Memory', 'Pods', 'Hourly Cost', 'Daily Cost', 'Monthly Cost'];
-        rows = (filteredData.nodes || []).map(n => [
+        headers = [
+          'Cluster',
+          'Node',
+          'Type',
+          'Region',
+          'CPU',
+          'Memory',
+          'Pods',
+          'Hourly Cost',
+          'Daily Cost',
+          'Monthly Cost',
+        ];
+        rows = (filteredData.nodes || []).map((n) => [
           n.cluster,
           n.name,
           n.instanceType,
@@ -168,7 +201,7 @@ export const CostDashboard: React.FC = () => {
         break;
       case 'namespaces':
         headers = ['Cluster', 'Namespace', 'Pods', 'Hourly Cost', 'Daily Cost', 'Monthly Cost'];
-        rows = (filteredData.namespaces || []).map(ns => [
+        rows = (filteredData.namespaces || []).map((ns) => [
           ns.cluster,
           ns.namespace,
           String(ns.podCount),
@@ -179,7 +212,7 @@ export const CostDashboard: React.FC = () => {
         break;
       case 'workloads':
         headers = ['Cluster', 'Namespace', 'Workload', 'Kind', 'Pods', 'Hourly Cost', 'Daily Cost', 'Monthly Cost'];
-        rows = (filteredData.workloads || []).map(wl => [
+        rows = (filteredData.workloads || []).map((wl) => [
           wl.cluster,
           wl.namespace,
           wl.name,
@@ -199,10 +232,9 @@ export const CostDashboard: React.FC = () => {
       return value;
     };
 
-    const csvContent = [
-      headers.map(escapeCSV).join(','),
-      ...rows.map(row => row.map(escapeCSV).join(','))
-    ].join('\n');
+    const csvContent = [headers.map(escapeCSV).join(','), ...rows.map((row) => row.map(escapeCSV).join(','))].join(
+      '\n',
+    );
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -231,7 +263,11 @@ export const CostDashboard: React.FC = () => {
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">
@@ -277,11 +313,11 @@ export const CostDashboard: React.FC = () => {
                       }`}
                     >
                       {tab.label}
-                      <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
-                        activeTab === tab.id
-                          ? 'bg-blue-100 text-blue-600'
-                          : 'bg-gray-100 text-gray-500'
-                      }`}>
+                      <span
+                        className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
+                          activeTab === tab.id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
                         {formatTabCount(tab.id)}
                       </span>
                     </button>
@@ -293,7 +329,12 @@ export const CostDashboard: React.FC = () => {
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
                       </svg>
                     </div>
                     <input
@@ -308,7 +349,12 @@ export const CostDashboard: React.FC = () => {
                         onClick={() => setFilter('')}
                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
                       >
-                        <svg className="h-4 w-4 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg
+                          className="h-4 w-4 text-gray-400 hover:text-gray-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
@@ -319,7 +365,12 @@ export const CostDashboard: React.FC = () => {
                     className="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-1"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                     Export CSV
                   </button>
@@ -329,18 +380,10 @@ export const CostDashboard: React.FC = () => {
 
             {/* Tab Content */}
             <div>
-              {activeTab === 'clusters' && (
-                <CostTable clusters={filteredData?.clusters} />
-              )}
-              {activeTab === 'nodes' && (
-                <CostTable nodes={filteredData?.nodes} />
-              )}
-              {activeTab === 'namespaces' && (
-                <CostTable namespaces={filteredData?.namespaces} />
-              )}
-              {activeTab === 'workloads' && (
-                <CostTable workloads={filteredData?.workloads} />
-              )}
+              {activeTab === 'clusters' && <CostTable clusters={filteredData?.clusters} />}
+              {activeTab === 'nodes' && <CostTable nodes={filteredData?.nodes} />}
+              {activeTab === 'namespaces' && <CostTable namespaces={filteredData?.namespaces} />}
+              {activeTab === 'workloads' && <CostTable workloads={filteredData?.workloads} />}
             </div>
           </div>
         </>
