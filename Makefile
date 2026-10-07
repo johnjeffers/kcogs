@@ -22,7 +22,7 @@ install:
 
 # Update dependencies to latest versions
 update:
-	cd backend && go get -u ./... && go mod tidy
+	cd backend && go get $$(go list -m -f '{{if not (or .Indirect .Main)}}{{.Path}}@latest{{end}}' all) && go mod tidy
 	cd frontend && npx npm-check-updates -u && npm install
 
 # Build for production (single binary with embedded frontend)
