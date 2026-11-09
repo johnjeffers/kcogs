@@ -5,6 +5,7 @@ interface CostSummaryProps {
   totalCost: number;
   selectedCount: number;
   totalCount: number;
+  countLabel: string;
   currency: string;
 }
 
@@ -13,6 +14,7 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
   totalCost,
   selectedCount,
   totalCount,
+  countLabel,
   currency,
 }) => {
   const formatCost = (cost: number, decimals: number = 2) => {
@@ -30,7 +32,8 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
   const totalMonthly = totalCost * 730;
 
   // Client and server add these up in different orders, so allow for float noise
-  const showBoth = Math.abs(selectedCost - totalCost) > 1e-6 || selectedCount !== totalCount;
+  const showCostTotal = Math.abs(selectedCost - totalCost) > 1e-6;
+  const showCountTotal = selectedCount !== totalCount;
 
   return (
     <div className="mb-6">
@@ -39,7 +42,7 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <dt className="text-sm font-medium text-gray-500 truncate">Hourly Cost</dt>
-            {showBoth ? (
+            {showCostTotal ? (
               <dd className="mt-1">
                 <div className="text-2xl font-semibold text-gray-900">{formatCost(selectedCost)}</div>
                 <div className="text-sm text-gray-500">of {formatCost(totalCost)} total</div>
@@ -54,7 +57,7 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <dt className="text-sm font-medium text-gray-500 truncate">Daily Cost</dt>
-            {showBoth ? (
+            {showCostTotal ? (
               <dd className="mt-1">
                 <div className="text-2xl font-semibold text-gray-900">{formatCost(selectedDaily)}</div>
                 <div className="text-sm text-gray-500">of {formatCost(totalDaily)} total</div>
@@ -69,7 +72,7 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <dt className="text-sm font-medium text-gray-500 truncate">Monthly Cost</dt>
-            {showBoth ? (
+            {showCostTotal ? (
               <dd className="mt-1">
                 <div className="text-2xl font-semibold text-gray-900">{formatCost(selectedMonthly)}</div>
                 <div className="text-sm text-gray-500">of {formatCost(totalMonthly)} total</div>
@@ -83,8 +86,8 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
         {/* Resource Count */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">Resources</dt>
-            {showBoth ? (
+            <dt className="text-sm font-medium text-gray-500 truncate">{countLabel}</dt>
+            {showCountTotal ? (
               <dd className="mt-1">
                 <div className="text-2xl font-semibold text-gray-900">{selectedCount}</div>
                 <div className="text-sm text-gray-500">of {totalCount} total</div>

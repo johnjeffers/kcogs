@@ -107,50 +107,16 @@ export const CostDashboard: React.FC = () => {
     return `${filtered}/${total}`;
   };
 
-  // Calculate totals from all data (unfiltered)
-  const totals = useMemo(() => {
-    if (!data) return { cost: 0, count: 0 };
-    const cost = data.totalCost;
-    const count = (data.nodes?.length || 0) + (data.namespaces?.length || 0) + (data.workloads?.length || 0);
-    return { cost, count };
-  }, [data]);
+  // Each tab is a complete breakdown of the same spend, so only the active
+  // tab's rows are added up. Adding tabs together would multiply the cost.
+  const selectedCost = useMemo(() => {
+    if (!filteredData) return 0;
+    const items: { totalCost?: number; hourlyCost?: number }[] | undefined = filteredData[activeTab];
+    return items?.reduce((sum, item) => sum + (item.totalCost ?? item.hourlyCost ?? 0), 0) || 0;
+  }, [filteredData, activeTab]);
 
-  // Calculate selected summary based on active tab and filter
-  const selectedData = useMemo(() => {
-    if (!filteredData) return { cost: 0, count: 0 };
-
-    const sumCost = <T extends { totalCost?: number; hourlyCost?: number }>(items: T[] | undefined) =>
-      items?.reduce((sum, item) => sum + (item.totalCost ?? item.hourlyCost ?? 0), 0) || 0;
-
-    const isClusterTab = activeTab === 'clusters';
-
-    // Nodes, namespaces, and workloads are each a complete breakdown of the same
-    // spend, so cost comes from the clusters alone. Adding them would multiply it.
-    if (isClusterTab) {
-      const cost = sumCost(filteredData.clusters);
-      const selectedClusters = new Set(filteredData.clusters?.map((c) => c.name));
-      const countSelected = (items: { cluster: string }[] | undefined) =>
-        items?.filter((item) => selectedClusters.has(item.cluster)).length || 0;
-      const count = countSelected(data?.nodes) + countSelected(data?.namespaces) + countSelected(data?.workloads);
-      return { cost, count };
-    }
-
-    // For specific resource tabs, show only that resource type's data
-    let items: { totalCost?: number; hourlyCost?: number }[] | undefined;
-    switch (activeTab) {
-      case 'nodes':
-        items = filteredData.nodes;
-        break;
-      case 'namespaces':
-        items = filteredData.namespaces;
-        break;
-      case 'workloads':
-        items = filteredData.workloads;
-        break;
-    }
-
-    return { cost: sumCost(items), count: items?.length || 0 };
-  }, [data, filteredData, activeTab]);
+  const activeTabCount = getTabCount(activeTab);
+  const activeTabLabel = tabs.find((tab) => tab.id === activeTab)?.label ?? '';
 
   const exportToCSV = () => {
     if (!filteredData) return;
@@ -290,10 +256,11 @@ export const CostDashboard: React.FC = () => {
       {data && data.clusters && data.clusters.length > 0 && (
         <>
           <CostSummary
-            selectedCost={selectedData.cost}
-            totalCost={totals.cost}
-            selectedCount={selectedData.count}
-            totalCount={totals.count}
+            selectedCost={selectedCost}
+            totalCost={data.totalCost}
+            selectedCount={activeTabCount.filtered}
+            totalCount={activeTabCount.total}
+            countLabel={activeTabLabel}
             currency={data.currency}
           />
 
