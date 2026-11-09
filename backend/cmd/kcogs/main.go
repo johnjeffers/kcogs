@@ -37,9 +37,14 @@ func main() {
 
 	// Setup algorithm registry
 	registry := cogs.NewRegistry()
-	if err := registry.Register(&algorithms.RequestBasedAlgorithm{}); err != nil {
-		logger.Error("failed to register algorithm", "error", err)
-		os.Exit(1)
+	for _, algorithm := range []cogs.Algorithm{
+		&algorithms.RequestBasedAlgorithm{},
+		&algorithms.CapacityBasedAlgorithm{},
+	} {
+		if err := registry.Register(algorithm); err != nil {
+			logger.Error("failed to register algorithm", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	// Create calculator

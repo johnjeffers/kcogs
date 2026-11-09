@@ -90,6 +90,8 @@ func (c *Client) GetNodes(ctx context.Context) ([]cogs.NodeInfo, error) {
 			Region:       region,
 			CPUCapacity:  cpuCapacity,
 			MemCapacity:  memCapacity,
+			CPUAlloc:     node.Status.Allocatable.Cpu().MilliValue(),
+			MemAlloc:     node.Status.Allocatable.Memory().Value(),
 			Labels:       node.Labels,
 			HourlyCost:   0, // Will be set by pricing provider
 			IsFargate:    isFargate,

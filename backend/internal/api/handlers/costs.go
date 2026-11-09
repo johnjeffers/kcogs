@@ -162,6 +162,9 @@ func (h *CostsHandler) GetNamespaceCosts(w http.ResponseWriter, r *http.Request)
 				PodCount:  podCount,
 			})
 		}
+		if showIdle(cc, namespaces) {
+			nsDTOs = append(nsDTOs, idleNamespaceDTO(cc))
+		}
 	}
 
 	resp := CostResponse{
@@ -245,6 +248,17 @@ func (h *CostsHandler) buildCostResponse(result *cogs.CalculationResult, nodes [
 				PodCount:  podCount,
 			})
 		}
+		if showIdle(cc, namespaces) {
+			nsDTOs = append(nsDTOs, idleNamespaceDTO(cc))
+			wlDTOs = append(wlDTOs, WorkloadCostDTO{
+				Cluster:   cc.ClusterName,
+				Namespace: idleName,
+				Name:      idleName,
+				Kind:      "Idle",
+				TotalCost: float64(cc.IdleCost),
+				IsIdle:    true,
+			})
+		}
 	}
 
 	return CostResponse{
@@ -260,6 +274,25 @@ func (h *CostsHandler) buildCostResponse(result *cogs.CalculationResult, nodes [
 			Clusters:   clusters,
 			Namespaces: namespaces,
 		},
+	}
+}
+
+// idleName labels the rows holding node cost no pod is charged for. Parentheses
+// aren't valid in Kubernetes names, so it can't collide with a real one.
+const idleName = "(idle)"
+
+// showIdle reports whether a cluster's idle cost belongs in a response. With a
+// namespace filter, pods in other namespaces would be mistaken for idle capacity.
+func showIdle(cc *cogs.ClusterCost, namespaces []string) bool {
+	return cc.IdleCost > 0 && len(namespaces) == 0
+}
+
+func idleNamespaceDTO(cc *cogs.ClusterCost) NamespaceCostDTO {
+	return NamespaceCostDTO{
+		Cluster:   cc.ClusterName,
+		Namespace: idleName,
+		TotalCost: float64(cc.IdleCost),
+		IsIdle:    true,
 	}
 }
 

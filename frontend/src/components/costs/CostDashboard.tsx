@@ -15,6 +15,9 @@ const tabs: { id: TabType; label: string }[] = [
   { id: 'workloads', label: 'Workloads' },
 ];
 
+// Idle rows balance a tab against the total, but aren't namespaces or workloads
+const countWithoutIdle = (rows: { isIdle?: boolean }[] | undefined) => rows?.filter((row) => !row.isIdle).length || 0;
+
 export const CostDashboard: React.FC = () => {
   const dispatch = useAppDispatch();
   const { data, loading, error, algorithms } = useAppSelector((state) => state.costs);
@@ -90,13 +93,13 @@ export const CostDashboard: React.FC = () => {
         };
       case 'namespaces':
         return {
-          filtered: filteredData?.namespaces?.length || 0,
-          total: data.namespaces?.length || 0,
+          filtered: countWithoutIdle(filteredData?.namespaces),
+          total: countWithoutIdle(data.namespaces),
         };
       case 'workloads':
         return {
-          filtered: filteredData?.workloads?.length || 0,
-          total: data.workloads?.length || 0,
+          filtered: countWithoutIdle(filteredData?.workloads),
+          total: countWithoutIdle(data.workloads),
         };
     }
   };

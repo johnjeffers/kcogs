@@ -31,6 +31,7 @@ export interface NamespaceCost {
   namespace: string;
   totalCost: number;
   podCount: number;
+  isIdle?: boolean;
 }
 
 export interface WorkloadCost {
@@ -40,6 +41,7 @@ export interface WorkloadCost {
   kind: string;
   totalCost: number;
   podCount: number;
+  isIdle?: boolean;
 }
 
 export interface PodCost {

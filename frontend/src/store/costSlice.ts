@@ -15,6 +15,7 @@ interface CostState {
   error: string | null;
   algorithm: AlgorithmConfig;
   filters: CostFilters;
+  latestRequestId: string | null;
 }
 
 const initialState: CostState = {
@@ -27,6 +28,7 @@ const initialState: CostState = {
     params: {},
   },
   filters: {},
+  latestRequestId: null,
 };
 
 export const fetchCosts = createAsyncThunk('costs/fetch', async (_, { getState }) => {
@@ -57,15 +59,19 @@ const costSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchCosts.pending, (state) => {
+      .addCase(fetchCosts.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        state.latestRequestId = action.meta.requestId;
       })
       .addCase(fetchCosts.fulfilled, (state, action) => {
+        // A slow response for a previous algorithm must not replace a newer one
+        if (action.meta.requestId !== state.latestRequestId) return;
         state.loading = false;
         state.data = action.payload;
       })
       .addCase(fetchCosts.rejected, (state, action) => {
+        if (action.meta.requestId !== state.latestRequestId) return;
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch costs';
       })

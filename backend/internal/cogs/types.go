@@ -14,6 +14,8 @@ type NodeInfo struct {
 	HourlyCost   CostValue
 	CPUCapacity  int64 // millicores
 	MemCapacity  int64 // bytes
+	CPUAlloc     int64 // millicores pods can request (node allocatable)
+	MemAlloc     int64 // bytes pods can request (node allocatable)
 	Labels       map[string]string
 	IsFargate    bool // True if this is a Fargate virtual node
 }
@@ -39,6 +41,7 @@ type PodInfo struct {
 type ClusterCost struct {
 	ClusterName    string
 	TotalCost      CostValue
+	IdleCost       CostValue // part of TotalCost not allocated to any pod
 	NamespaceCosts map[string]*NamespaceCost
 	NodeCount      int
 	PodCount       int

@@ -2,6 +2,7 @@ package cogs
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 )
 
@@ -83,6 +84,7 @@ func (r *Registry) List() []AlgorithmInfo {
 			IsDefault:     alg.ID() == r.defaultID,
 		})
 	}
+	sort.Slice(infos, func(i, j int) bool { return infos[i].Name < infos[j].Name })
 	return infos
 }
 

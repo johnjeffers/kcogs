@@ -7,6 +7,7 @@ type AlgorithmID string
 
 const (
 	AlgorithmRequestBased    AlgorithmID = "request-based"
+	AlgorithmCapacityBased   AlgorithmID = "capacity-based"
 	AlgorithmUsageBased      AlgorithmID = "usage-based"
 	AlgorithmMaxRequestUsage AlgorithmID = "max-request-usage"
 	AlgorithmWeightedBlend   AlgorithmID = "weighted-blend"

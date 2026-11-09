@@ -43,6 +43,7 @@ type NamespaceCostDTO struct {
 	Namespace string  `json:"namespace"`
 	TotalCost float64 `json:"totalCost"`
 	PodCount  int     `json:"podCount"`
+	IsIdle    bool    `json:"isIdle,omitempty"`
 }
 
 // WorkloadCostDTO represents workload cost data for API responses
@@ -53,6 +54,7 @@ type WorkloadCostDTO struct {
 	Kind      string  `json:"kind"`
 	TotalCost float64 `json:"totalCost"`
 	PodCount  int     `json:"podCount"`
+	IsIdle    bool    `json:"isIdle,omitempty"`
 }
 
 // PodCostDTO represents pod cost data for API responses
