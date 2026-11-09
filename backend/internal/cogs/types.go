@@ -30,6 +30,8 @@ type PodInfo struct {
 	MemoryRequest int64  // bytes
 	CPUUsage      int64  // millicores (for usage-based algorithms)
 	MemoryUsage   int64  // bytes (for usage-based algorithms)
+	FargateCPU    int64  // millicores AWS bills for, 0 if unknown or not on Fargate
+	FargateMemory int64  // bytes AWS bills for, 0 if unknown or not on Fargate
 	Labels        map[string]string
 }
 

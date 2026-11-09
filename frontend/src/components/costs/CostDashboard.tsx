@@ -124,13 +124,14 @@ export const CostDashboard: React.FC = () => {
 
     const isClusterTab = activeTab === 'clusters';
 
-    // For clusters tab, sum all filtered resource types
+    // Nodes, namespaces, and workloads are each a complete breakdown of the same
+    // spend, so cost comes from the clusters alone. Adding them would multiply it.
     if (isClusterTab) {
-      const cost = sumCost(filteredData.nodes) + sumCost(filteredData.namespaces) + sumCost(filteredData.workloads);
-      const count =
-        (filteredData.nodes?.length || 0) +
-        (filteredData.namespaces?.length || 0) +
-        (filteredData.workloads?.length || 0);
+      const cost = sumCost(filteredData.clusters);
+      const selectedClusters = new Set(filteredData.clusters?.map((c) => c.name));
+      const countSelected = (items: { cluster: string }[] | undefined) =>
+        items?.filter((item) => selectedClusters.has(item.cluster)).length || 0;
+      const count = countSelected(data?.nodes) + countSelected(data?.namespaces) + countSelected(data?.workloads);
       return { cost, count };
     }
 
@@ -149,7 +150,7 @@ export const CostDashboard: React.FC = () => {
     }
 
     return { cost: sumCost(items), count: items?.length || 0 };
-  }, [filteredData, activeTab]);
+  }, [data, filteredData, activeTab]);
 
   const exportToCSV = () => {
     if (!filteredData) return;

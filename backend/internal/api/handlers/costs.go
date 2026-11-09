@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -47,7 +48,7 @@ func (h *CostsHandler) GetCosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Recalculate Fargate costs based on actual pod requests
+	// Recalculate Fargate costs from the size AWS bills for each pod
 	nodes = h.provider.RecalculateFargateCosts(ctx, nodes, pods)
 
 	// Calculate costs
@@ -83,7 +84,7 @@ func (h *CostsHandler) GetClusterCosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Recalculate Fargate costs based on actual pod requests
+	// Recalculate Fargate costs from the size AWS bills for each pod
 	nodes = h.provider.RecalculateFargateCosts(ctx, nodes, pods)
 
 	result, err := h.calculator.Calculate(ctx, algorithmID, nodes, pods, cogs.AlgorithmParams{})
@@ -137,7 +138,7 @@ func (h *CostsHandler) GetNamespaceCosts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Recalculate Fargate costs based on actual pod requests
+	// Recalculate Fargate costs from the size AWS bills for each pod
 	nodes = h.provider.RecalculateFargateCosts(ctx, nodes, pods)
 
 	result, err := h.calculator.Calculate(ctx, algorithmID, nodes, pods, cogs.AlgorithmParams{})
@@ -265,9 +266,14 @@ func (h *CostsHandler) buildCostResponse(result *cogs.CalculationResult, nodes [
 // formatCPU formats CPU millicores to a human-readable string
 func formatCPU(millicores int64) string {
 	if millicores >= 1000 {
-		return fmt.Sprintf("%d", millicores/1000)
+		return strconv.FormatFloat(float64(millicores)/1000, 'f', -1, 64)
 	}
 	return fmt.Sprintf("%dm", millicores)
+}
+
+// formatScaled renders value/unit to one decimal place, dropping a trailing ".0"
+func formatScaled(value, unit int64) string {
+	return strings.TrimSuffix(fmt.Sprintf("%.1f", float64(value)/float64(unit)), ".0")
 }
 
 // formatMemory formats bytes to a human-readable string
@@ -279,11 +285,11 @@ func formatMemory(bytes int64) string {
 	)
 	switch {
 	case bytes >= GB:
-		return fmt.Sprintf("%dGi", bytes/GB)
+		return formatScaled(bytes, GB) + "Gi"
 	case bytes >= MB:
-		return fmt.Sprintf("%dMi", bytes/MB)
+		return formatScaled(bytes, MB) + "Mi"
 	case bytes >= KB:
-		return fmt.Sprintf("%dKi", bytes/KB)
+		return formatScaled(bytes, KB) + "Ki"
 	default:
 		return fmt.Sprintf("%d", bytes)
 	}

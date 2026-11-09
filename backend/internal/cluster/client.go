@@ -120,11 +120,8 @@ func (c *Client) GetPods(ctx context.Context, namespaces []string) ([]cogs.PodIn
 				continue
 			}
 
-			var cpuRequest, memRequest int64
-			for _, container := range pod.Spec.Containers {
-				cpuRequest += container.Resources.Requests.Cpu().MilliValue()
-				memRequest += container.Resources.Requests.Memory().Value()
-			}
+			cpuRequest, memRequest := effectiveRequests(&pod.Spec)
+			fargateCPU, fargateMemory := parseFargateCapacity(pod.Annotations[fargateCapacityAnnotation])
 
 			workloadName, workloadKind := getWorkloadInfo(&pod)
 
@@ -137,12 +134,61 @@ func (c *Client) GetPods(ctx context.Context, namespaces []string) ([]cogs.PodIn
 				WorkloadKind:  workloadKind,
 				CPURequest:    cpuRequest,
 				MemoryRequest: memRequest,
+				FargateCPU:    fargateCPU,
+				FargateMemory: fargateMemory,
 				Labels:        pod.Labels,
 			})
 		}
 	}
 
 	return allPods, nil
+}
+
+// fargateCapacityAnnotation is set by EKS on each Fargate pod and holds the size
+// AWS provisioned and bills for it, for example "0.25vCPU 0.5GB".
+const fargateCapacityAnnotation = "CapacityProvisioned"
+
+// parseFargateCapacity returns the millicores and bytes in a CapacityProvisioned
+// value, or zeros if the value is empty or malformed.
+func parseFargateCapacity(value string) (int64, int64) {
+	var vCPU, gb float64
+	if _, err := fmt.Sscanf(value, "%fvCPU %fGB", &vCPU, &gb); err != nil {
+		return 0, 0
+	}
+	return int64(vCPU * 1000), int64(gb * 1024 * 1024 * 1024)
+}
+
+// effectiveRequests returns a pod's CPU (millicores) and memory (bytes) requests
+// the way the scheduler counts them: app containers plus native sidecars, or the
+// init-container peak if that is higher, plus any pod overhead.
+func effectiveRequests(spec *corev1.PodSpec) (int64, int64) {
+	var cpu, mem int64
+	for _, c := range spec.Containers {
+		cpu += c.Resources.Requests.Cpu().MilliValue()
+		mem += c.Resources.Requests.Memory().Value()
+	}
+
+	var sidecarCPU, sidecarMem, initPeakCPU, initPeakMem int64
+	for _, c := range spec.InitContainers {
+		reqCPU := c.Resources.Requests.Cpu().MilliValue()
+		reqMem := c.Resources.Requests.Memory().Value()
+
+		if c.RestartPolicy != nil && *c.RestartPolicy == corev1.ContainerRestartPolicyAlways {
+			sidecarCPU += reqCPU
+			sidecarMem += reqMem
+			initPeakCPU = max(initPeakCPU, sidecarCPU)
+			initPeakMem = max(initPeakMem, sidecarMem)
+			continue
+		}
+
+		// Sidecars started earlier keep running alongside this init container
+		initPeakCPU = max(initPeakCPU, sidecarCPU+reqCPU)
+		initPeakMem = max(initPeakMem, sidecarMem+reqMem)
+	}
+
+	cpu = max(cpu+sidecarCPU, initPeakCPU) + spec.Overhead.Cpu().MilliValue()
+	mem = max(mem+sidecarMem, initPeakMem) + spec.Overhead.Memory().Value()
+	return cpu, mem
 }
 
 // getWorkloadInfo extracts the owning workload name and kind from a pod

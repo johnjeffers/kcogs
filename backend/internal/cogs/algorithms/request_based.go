@@ -60,7 +60,10 @@ func (a *RequestBasedAlgorithm) Calculate(
 		}
 
 		for _, node := range nodes {
-			nodePods := podsByNode[node.Name]
+			// A node is billed whether or not anything is scheduled on it
+			clusterCost.TotalCost += node.HourlyCost
+
+			nodePods := podsByNode[nodeKey(node.ClusterName, node.Name)]
 			if len(nodePods) == 0 {
 				continue
 			}
@@ -71,17 +74,7 @@ func (a *RequestBasedAlgorithm) Calculate(
 
 			// Allocate node cost to pods based on request proportion
 			for _, pod := range nodePods {
-				var cpuFraction, memFraction float64
-
-				if totalCPURequests > 0 {
-					cpuFraction = float64(pod.CPURequest) / float64(totalCPURequests)
-				}
-				if totalMemRequests > 0 {
-					memFraction = float64(pod.MemoryRequest) / float64(totalMemRequests)
-				}
-
-				// Average of CPU and memory fractions
-				fraction := (cpuFraction + memFraction) / 2.0
+				fraction := podFraction(pod, totalCPURequests, totalMemRequests, len(nodePods))
 				podCost := cogs.CostValue(float64(node.HourlyCost) * fraction)
 
 				// Aggregate into namespace
@@ -102,8 +95,6 @@ func (a *RequestBasedAlgorithm) Calculate(
 
 				clusterCost.PodCount++
 			}
-
-			clusterCost.TotalCost += node.HourlyCost
 		}
 
 		result.ClusterCosts[clusterName] = clusterCost
@@ -123,12 +114,35 @@ func groupNodesByCluster(nodes []cogs.NodeInfo) map[string][]cogs.NodeInfo {
 	return result
 }
 
+// nodeKey identifies a node across clusters, since node names are only unique
+// within one cluster.
+func nodeKey(clusterName, nodeName string) string {
+	return clusterName + "/" + nodeName
+}
+
 func groupPodsByNode(pods []cogs.PodInfo) map[string][]cogs.PodInfo {
 	result := make(map[string][]cogs.PodInfo)
 	for _, pod := range pods {
-		result[pod.NodeName] = append(result[pod.NodeName], pod)
+		key := nodeKey(pod.ClusterName, pod.NodeName)
+		result[key] = append(result[key], pod)
 	}
 	return result
+}
+
+// podFraction returns the share of a node's cost owed by one pod: the average of
+// its CPU and memory shares. A resource nobody on the node requested is left out
+// of the average, so the shares of all pods on a node always add up to 1.
+func podFraction(pod cogs.PodInfo, totalCPU, totalMem int64, podCount int) float64 {
+	switch {
+	case totalCPU > 0 && totalMem > 0:
+		return (float64(pod.CPURequest)/float64(totalCPU) + float64(pod.MemoryRequest)/float64(totalMem)) / 2.0
+	case totalCPU > 0:
+		return float64(pod.CPURequest) / float64(totalCPU)
+	case totalMem > 0:
+		return float64(pod.MemoryRequest) / float64(totalMem)
+	default:
+		return 1.0 / float64(podCount)
+	}
 }
 
 func sumCPURequests(pods []cogs.PodInfo) int64 {

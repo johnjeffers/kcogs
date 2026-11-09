@@ -29,7 +29,8 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
   const selectedMonthly = selectedCost * 730;
   const totalMonthly = totalCost * 730;
 
-  const showBoth = selectedCost !== totalCost || selectedCount !== totalCount;
+  // Client and server add these up in different orders, so allow for float noise
+  const showBoth = Math.abs(selectedCost - totalCost) > 1e-6 || selectedCount !== totalCount;
 
   return (
     <div className="mb-6">

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"sync"
 	"time"
@@ -155,14 +156,14 @@ func (p *AWSProvider) fetchFargatePricing(ctx context.Context, region string) (*
 	result := &FargatePricing{}
 
 	// Fetch vCPU pricing
-	cpuPrice, err := p.fetchFargateComponentPrice(ctx, locationName, "vCPU-Hours")
+	cpuPrice, err := p.fetchFargateComponentPrice(ctx, locationName, "cputype", "perCPU")
 	if err != nil {
 		return nil, fmt.Errorf("fetching Fargate vCPU price: %w", err)
 	}
 	result.CPUPerHour = cpuPrice
 
 	// Fetch Memory pricing
-	memPrice, err := p.fetchFargateComponentPrice(ctx, locationName, "GB-Hours")
+	memPrice, err := p.fetchFargateComponentPrice(ctx, locationName, "memorytype", "perGB")
 	if err != nil {
 		return nil, fmt.Errorf("fetching Fargate memory price: %w", err)
 	}
@@ -171,8 +172,10 @@ func (p *AWSProvider) fetchFargatePricing(ctx context.Context, region string) (*
 	return result, nil
 }
 
-// fetchFargateComponentPrice fetches a specific Fargate pricing component
-func (p *AWSProvider) fetchFargateComponentPrice(ctx context.Context, location, usageType string) (cogs.CostValue, error) {
+// fetchFargateComponentPrice fetches a specific Fargate pricing component. The
+// product is selected by attribute because usagetype values carry a region
+// prefix (for example "USW2-Fargate-GB-Hours").
+func (p *AWSProvider) fetchFargateComponentPrice(ctx context.Context, location, attribute, value string) (cogs.CostValue, error) {
 	input := &pricing.GetProductsInput{
 		ServiceCode: aws.String("AmazonEKS"),
 		Filters: []types.Filter{
@@ -183,8 +186,8 @@ func (p *AWSProvider) fetchFargateComponentPrice(ctx context.Context, location, 
 			},
 			{
 				Type:  types.FilterTypeTermMatch,
-				Field: aws.String("usagetype"),
-				Value: aws.String(usageType),
+				Field: aws.String(attribute),
+				Value: aws.String(value),
 			},
 		},
 		MaxResults: aws.Int32(10),
@@ -228,14 +231,15 @@ func (p *AWSProvider) fetchFargateComponentPrice(ctx context.Context, location, 
 
 	// If we couldn't find pricing from API, use fallback prices (us-east-1 prices as baseline)
 	// These are approximate and should be updated periodically
-	switch usageType {
-	case "vCPU-Hours":
+	slog.Warn("Fargate price not found, using us-east-1 fallback", "location", location, "attribute", attribute)
+	switch attribute {
+	case "cputype":
 		return cogs.CostValue(0.04048), nil // Fargate vCPU per hour
-	case "GB-Hours":
+	case "memorytype":
 		return cogs.CostValue(0.004445), nil // Fargate Memory per GB per hour
 	}
 
-	return 0, fmt.Errorf("no Fargate pricing found for %s in %s", usageType, location)
+	return 0, fmt.Errorf("no Fargate pricing found for %s in %s", value, location)
 }
 
 // containsFargate checks if a string contains Fargate-related identifiers

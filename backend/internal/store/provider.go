@@ -13,7 +13,7 @@ import (
 type DataProvider interface {
 	GetNodes(ctx context.Context, clusters []string) ([]cogs.NodeInfo, error)
 	GetPods(ctx context.Context, clusters []string, namespaces []string) ([]cogs.PodInfo, error)
-	// RecalculateFargateCosts updates Fargate node costs based on actual pod requests
+	// RecalculateFargateCosts updates Fargate node costs from the size AWS bills for each pod
 	RecalculateFargateCosts(ctx context.Context, nodes []cogs.NodeInfo, pods []cogs.PodInfo) []cogs.NodeInfo
 }
 
@@ -133,16 +133,17 @@ func (p *ClusterDataProvider) GetPods(ctx context.Context, clusters []string, na
 	return filtered, nil
 }
 
-// RecalculateFargateCosts updates Fargate node costs based on actual pod requests
+// RecalculateFargateCosts updates Fargate node costs from the size AWS bills for each pod
 func (p *ClusterDataProvider) RecalculateFargateCosts(ctx context.Context, nodes []cogs.NodeInfo, pods []cogs.PodInfo) []cogs.NodeInfo {
 	if p.pricingProvider == nil {
 		return nodes
 	}
 
-	// Build map of pod resources by node
+	// Build map of billed pod resources by node
 	type nodeResources struct {
 		cpuMillicores int64
 		memoryBytes   int64
+		usedRequests  bool // a pod's billed size was unknown, so its requests were used
 	}
 	podResourcesByNode := make(map[string]*nodeResources)
 
@@ -151,8 +152,15 @@ func (p *ClusterDataProvider) RecalculateFargateCosts(ctx context.Context, nodes
 		if _, ok := podResourcesByNode[key]; !ok {
 			podResourcesByNode[key] = &nodeResources{}
 		}
-		podResourcesByNode[key].cpuMillicores += pod.CPURequest
-		podResourcesByNode[key].memoryBytes += pod.MemoryRequest
+		resources := podResourcesByNode[key]
+		if pod.FargateCPU > 0 && pod.FargateMemory > 0 {
+			resources.cpuMillicores += pod.FargateCPU
+			resources.memoryBytes += pod.FargateMemory
+		} else {
+			resources.cpuMillicores += pod.CPURequest
+			resources.memoryBytes += pod.MemoryRequest
+			resources.usedRequests = true
+		}
 	}
 
 	// Cache Fargate pricing by region
@@ -194,11 +202,16 @@ func (p *ClusterDataProvider) RecalculateFargateCosts(ctx context.Context, nodes
 			fargatePriceCache[node.Region] = fargatePricing
 		}
 
-		// Update node capacity to reflect actual pod requests
+		if resources.usedRequests {
+			slog.Warn("Fargate pod has no CapacityProvisioned annotation, costing it from requests",
+				"node", node.Name)
+		}
+
+		// Show the billed size, since the size Kubernetes reports for the node is unrelated
 		node.CPUCapacity = resources.cpuMillicores
 		node.MemCapacity = resources.memoryBytes
 
-		// Calculate cost based on actual pod requests
+		// Calculate cost from the billed size
 		cpuVCPU := float64(resources.cpuMillicores) / 1000.0
 		memGB := float64(resources.memoryBytes) / (1024.0 * 1024.0 * 1024.0)
 

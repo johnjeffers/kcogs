@@ -28,7 +28,7 @@ interface PaginationProps {
 }
 
 const Pagination: React.FC<PaginationProps> = ({
-  currentPage,
+  currentPage: requestedPage,
   totalItems,
   pageSize,
   onPageChange,
@@ -36,6 +36,8 @@ const Pagination: React.FC<PaginationProps> = ({
 }) => {
   const effectivePageSize = pageSize === 'All' ? totalItems : pageSize;
   const totalPages = Math.ceil(totalItems / effectivePageSize);
+  // The requested page can be past the end after a filter shrinks the list
+  const currentPage = Math.min(requestedPage, totalPages);
   const isAllSelected = pageSize === 'All';
 
   const startItem = isAllSelected ? 1 : (currentPage - 1) * effectivePageSize + 1;
@@ -106,7 +108,8 @@ const Pagination: React.FC<PaginationProps> = ({
 
 function paginate<T>(data: T[], page: number, pageSize: PageSize): T[] {
   if (pageSize === 'All') return data;
-  const start = (page - 1) * pageSize;
+  const lastPage = Math.max(1, Math.ceil(data.length / pageSize));
+  const start = (Math.min(page, lastPage) - 1) * pageSize;
   return data.slice(start, start + pageSize);
 }
 
